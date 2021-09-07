@@ -161,7 +161,7 @@ export default function ListaPago(){
     };
 
     useEffect(() => {
-        fetch(`${API_URL}/pago`)
+        fetch(`${API_URL}/pagopendiente`)
         .then(res => res.json())
         .then ((result) => {
             setIsLoaded(true);
@@ -186,11 +186,11 @@ export default function ListaPago(){
                     aria-controls="panel1a-content"
                     id="panel1a-header"
                 >
-                    <Typography >Lista de pagos pendientes</Typography>
+                    <Typography >Lista de pagos</Typography>
                 </AccordionSummary>
                 <AccordionDetails>
                     <div style={{ height: 350, width: '100%' }}>
-                    <XGrid 
+                        <XGrid 
                             rows={items} 
                             columns={columns} 
                             pageSize={15} 

@@ -1,20 +1,13 @@
 import React,{useEffect,useState} from 'react';
 import { XGrid } from '@material-ui/x-grid';
-import {GridLinkOperator} from '@material-ui/data-grid';
 import PropTypes from 'prop-types';
-import Button from '@material-ui/core/Button';
-import Insertar from './NuevoPago';
+import Insertar from './NuevoBanco';
 import Dialog from '@material-ui/core/Dialog';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Grid from '@material-ui/core/Grid';
-import Accordion from '@material-ui/core/Accordion';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import Button from '@material-ui/core/Button';
 
-const API_URL = 'http://192.168.4.246:3001/api/tciPagos';
-
+const API_URL = 'http://192.168.4.246:3001/api/tciBancos';
 
 
 const currencyFormatter = new Intl.NumberFormat('es-ES', {
@@ -32,11 +25,11 @@ const eurPrice = {
 const columns = [
     { field: 'id', headerName: 'ID', type:'number', width: 70 },
     { field: 'tipo', headerName: 'Tipo', type:'string', width: 150, editable:true},
-    { field: 'concepto', headerName: 'Concepto', type:'string', width: 300, editable:true},
-    { field: 'estado_pagos', headerName: 'Estado Pago', type:'string', width: 150, editable:true},
-    { field: 'cantidad', headerName: 'Cantidad', ...eurPrice, editable:true},
-    { field: 'fecha', headerName: 'Fecha', type:'date', width: 150, editable:true},
-    { field: 'localizacion', headerName: 'Localización', type:'string', width: 200, editable:true},
+    { field: 'nombre_banco', headerName: 'Nombre Banco', type:'string', width: 300, editable:true},
+    { field: 'linea_poliza', headerName: 'Linea de Poliza', type:'string', width: 200, editable:true },
+    { field: 'cantidad', headerName: 'Cantidad', ...eurPrice, editable:true },
+    { field: 'fecha', headerName: 'Fecha', type:'date', width: 150, editable:true },
+    { field: 'localizacion', headerName: 'Localización', type:'string', width: 150, editable:true },
 ];
 
 function ModalInsert(props){
@@ -52,7 +45,7 @@ function ModalInsert(props){
         </Dialog>
     )
 }
-//
+
 function EditToolbar(props){
     const [open,setOpen] = useState(false);
     const deleteClick = () => {                                                        
@@ -61,7 +54,7 @@ function EditToolbar(props){
 
         //const abortController = new AbortController();
         //const signal = abortController.signal;
-        fetch(`${API_URL}/pago/${encodedValue}`,{
+        fetch(`${API_URL}/bancos/${encodedValue}`,{
             //signal: signal,
             method: 'DELETE',
            /* mode: 'no-cors',
@@ -88,7 +81,7 @@ function EditToolbar(props){
         <div>
         <Grid container spacing={3}>
             <Grid item xs>
-                <Button variant="contained" color="primary" onClick={handleClickOpen}>Insertar Pago Pendiente</Button>
+                <Button variant="contained" color="primary" onClick={handleClickOpen}>Insertar Banco</Button>
             </Grid>
             <Grid item xs>
             </Grid>
@@ -97,17 +90,18 @@ function EditToolbar(props){
             </Grid>
         </Grid>
             
-            <ModalInsert onClick={handleClickOpen} open={open} onClose={handleClose}>Insertar Pago Pendiente</ModalInsert>
+            <ModalInsert onClick={handleClickOpen} open={open} onClose={handleClose}>Insertar Banco</ModalInsert>
             
         </div>
     )
 }
+
 //Permite pasar una prop del XGrid a la barra EditToolbar
 EditToolbar.propTypes = {
     deleteItems: PropTypes.any,
 }
 //Función para enviar los datos editados al al función de actualización de la API 
-function EditarPago(props){
+function EditarBanco(props){
     const data ={'id':props.id ,'field':props.field,'value':props.value};       //Guardo los datos en un array para pasarlos
     var formBody = [];                                                          //Se necesita formatear la lista para pasarla por el fetch
     for (var property in data) {
@@ -119,7 +113,7 @@ function EditarPago(props){
     
     //const abortController = new AbortController();
     //const signal = abortController.signal;
-    fetch(`${API_URL}/pago`,{
+    fetch(`${API_URL}/bancos`,{
         //signal: signal,
         method: 'POST',
         mode: 'no-cors',
@@ -134,34 +128,21 @@ function EditarPago(props){
         },[])
 }
 
-export default function ListaPago(){ 
+export default function ListaBancos(){ 
     const [error,setError] = useState(null);                //Guarda estado de errores
     const [isLoaded,setIsLoaded] = useState(false);         //Guarda estado de Cargando (true,false)
     const [items,setItems] = useState([]);                  //Guarda la lista de pagos
     const [deleteItems,setDeleteItems] = useState ([]);     //Guarda la lista de elementos a borrar
-    const called = React.useRef(0);
-    const currentDate = new Date();
-    const defaultDate = currentDate.toISOString().substr(0,10);
-    const [filterModelState, setFilterModelState] = React.useState({
-        items: [
-            {id:1, columnField:'fecha', operatorValue:'is', value:defaultDate},
-        ],
-        linkOperator: GridLinkOperator.And,
-      });
 
-      const handleFilterChange = React.useCallback((model) => {
-        called.current += 1;
-        setFilterModelState(model);
-      }, []);
     const options = {
-        onCellEditCommit: (params) => {EditarPago(params)},
+        onCellEditCommit: (params) => {EditarBanco(params)},
         onSelectionModelChange: (params)=>{
             setDeleteItems(params);
           }
     };
 
     useEffect(() => {
-        fetch(`${API_URL}/pago`)
+        fetch(`${API_URL}/bancos`)
         .then(res => res.json())
         .then ((result) => {
             setIsLoaded(true);
@@ -180,32 +161,20 @@ export default function ListaPago(){
         return <div>Cargando...</div>;
     } else {
         return(
-            <Accordion>
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="panel1a-content"
-                    id="panel1a-header"
-                >
-                    <Typography >Lista de pagos pendientes</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <div style={{ height: 350, width: '100%' }}>
-                    <XGrid 
-                            rows={items} 
-                            columns={columns} 
-                            pageSize={15} 
-                            pagination={items}
-                            rowHeight={25}
-                            checkboxSelection 
-                            components={{Toolbar: EditToolbar,}} 
-                            componentsProps={{toolbar:{deleteItems}}} 
-                            {...options}
-                            filterModel={filterModelState}
-                            onFilterModelChange={handleFilterChange}
-                            />
-                    </div>
-                </AccordionDetails>
-            </Accordion>
+            <div style={{ height: 700, width: '100%' }}>
+                <XGrid 
+                    rows={items} 
+                    columns={columns} 
+                    pageSize={30} 
+                    pagination={items}
+                    rowHeight={25}
+                    checkboxSelection 
+                    components={{Toolbar: EditToolbar,}} 
+                    componentsProps={{toolbar:{deleteItems}}} 
+                    {...options}
+                    />
+            </div>
+            
         );
     }
 }
